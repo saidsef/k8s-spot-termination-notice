@@ -1,0 +1,39 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: spot-termination-notice
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: spot-termination-notice
+  template:
+    metadata:
+      labels:
+        app: spot-termination-notice
+    spec:
+      serviceAccountName: spot-termination-notice
+      containers:
+      - name: spot-termination-notice
+        image: saidsef/k8s-spot-termination-notice:latest
+        imagePullPolicy: Always
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: SPOT_POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+      nodeSelector:
+        lifecycle: Ec2Spot
