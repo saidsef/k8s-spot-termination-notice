@@ -35,5 +35,9 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: SLACK_API_TOKEN
+          value: <slack-token>
+        - name: SLACK_CHANNEL
+          value: <slack-token>
       nodeSelector:
         lifecycle: Ec2Spot
