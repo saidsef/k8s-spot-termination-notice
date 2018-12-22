@@ -53,7 +53,7 @@ class Spot(object):
     def watcher(self):
         while get(self.SPOT_META_URL).status_code != 200:
             logging.info('still alive, looping ...')
-            sllep(self.SLEEP)
+            sleep(self.SLEEP)
 
         self.slackit()
 
