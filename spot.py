@@ -16,13 +16,14 @@ class Spot(object):
         self.EC2_META_DATA   = 'http://169.254.169.254/latest/dynamic/instance-identity/document/'
         self.SPOT_META_URL   = 'http://169.254.169.254/latest/meta-data/spot/termination-time'
         self.SLEEP           = 5
-        self.CLUSTER         = os.environ.get('CLUSTER'. 'Default')
+        self.CLUSTER         = os.environ.get('CLUSTER'. None)
 
     def instance_details(self):
         return get(self.EC2_META_DATA, timeout=3).json()
 
     def payload(self, m):
         details = self.instance_details()
+        CLUSTER = 'Default' if self.CLUSTER is None else self.CLUSTER
         return [{
             "fallback": m,
             "color": "#a30b24",
@@ -31,7 +32,7 @@ class Spot(object):
             "author_icon": "http://ohai.mr-bot.co/assets/mrbot-500-5a2319d6ea6fa0362f73f3334805e012.png",
             "title": "Spot Instance Termination Notice",
             "title_link": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-interruptions.html",
-            "text": "Cluster: {}, instanceId: {}, accountId: {}, AZ: {}, instanceType: {}".format(self.CLUSTER, details['instanceId'], details['accountId'], details['availabilityZone'], details['instanceType']),
+            "text": "Cluster: {}, instanceId: {}, accountId: {}, AZ: {}, instanceType: {}".format(CLUSTER, details['instanceId'], details['accountId'], details['availabilityZone'], details['instanceType']),
             "fields": [{
                 "title": "Priority",
                 "value": "High",
