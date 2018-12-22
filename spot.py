@@ -16,7 +16,7 @@ class Spot(object):
         self.EC2_META_DATA   = 'http://169.254.169.254/latest/dynamic/instance-identity/document/'
         self.SPOT_META_URL   = 'http://169.254.169.254/latest/meta-data/spot/termination-time'
         self.SLEEP           = 5
-        self.CLUSTER         = os.environ.get('CLUSTER'. None)
+        self.CLUSTER         = os.environ.get('CLUSTER', None)
 
     def instance_details(self):
         return get(self.EC2_META_DATA, timeout=3).json()
