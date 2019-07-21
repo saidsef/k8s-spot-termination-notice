@@ -12,8 +12,6 @@ COPY . /app
 
 RUN apk add --update --no-cache ca-certificates && \
     pip --no-cache-dir install -r requirements.txt && \
-    rm -rfv /var/cache/apk/* && \
-    rm -rfv /root/.cache/* && \
     chown -R nobody:nobody .
 
 USER nobody
