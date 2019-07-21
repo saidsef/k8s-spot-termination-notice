@@ -9,6 +9,7 @@ before_script:
   - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
 script:
   - docker build -t saidsef/k8s-spot-termination-notice:latest .
+  - docker build -t saidsef/k8s-spot-termination-notice:arm64 . -f Dockerfile.arm64
   - docker push saidsef/k8s-spot-termination-notice
 notifications:
   email: true
