@@ -18,4 +18,5 @@ RUN apk add --update --no-cache ca-certificates && \
 
 USER nobody
 
-CMD ["python", "spot.py"]
+CMD ["spot.py"]
+ENTRYPOINT ["python"]
