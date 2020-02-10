@@ -20,7 +20,6 @@ before_script:
   - echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 script:
   - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t saidsef/k8s-spot-termination-notice:latest --push .
-  - docker push saidsef/k8s-spot-termination-notice
 notifications:
   email: true
   on_success: always
