@@ -2,17 +2,18 @@ FROM python:3-alpine
 
 LABEL maintainer="Said Sef said@saidsef.co.uk (saidsef.co.uk/)"
 
-ENV VERSION "1.0"
+ENV VERSION "2.1"
 ENV SLACK_API_TOKEN ${SLACK_API_TOKEN}
 ENV SLACK_CHANNEL ${SKACK_CHANNEL}
 
 WORKDIR /app
 
-COPY . /app
+COPY spot.py /app
+COPY requirements.txt /app
 
 RUN apk add --update --no-cache ca-certificates && \
     pip --no-cache-dir install -r requirements.txt && \
-    chown -R nobody:nobody .
+    chown -R nobody .
 
 USER nobody
 
