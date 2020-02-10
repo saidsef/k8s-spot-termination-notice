@@ -3,7 +3,6 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: spot-termination-notice
-  namespace: default
 spec:
   selector:
     matchLabels:
@@ -36,8 +35,34 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: SLACK_API_TOKEN
-          value: <slack-token>
+          valueFrom:
+            secretKeyRef:
+              name: slack
+              key: SLACK_API_TOKEN
         - name: SLACK_CHANNEL
-          value: <slack-token>
+          valueFrom:
+            secretKeyRef:
+              name: slack
+              key: SLACK_CHANNEL 
+        resources:
+          requests:
+            cpu: 10m
+            memory: 10Mi
+          limits:
+            cpu: 20m
+            memory: 20Mi
+        livenessProbe:
+          exec:
+            command:
+              - pgrep
+              - python
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - pgrep
+                - python
       nodeSelector:
         lifecycle: Ec2Spot
