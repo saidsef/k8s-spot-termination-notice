@@ -12,7 +12,8 @@ spec:
       labels:
         app: spot-termination-notice
     spec:
-      serviceAccountName: spot-termination-notice
+      # future proof: create service account for node draining
+      # serviceAccountName: spot-termination-notice
       containers:
       - name: spot-termination-notice
         image: saidsef/k8s-spot-termination-notice:latest
@@ -64,5 +65,3 @@ spec:
               command:
                 - pgrep
                 - python
-      nodeSelector:
-        lifecycle: Ec2Spot
