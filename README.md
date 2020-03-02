@@ -31,4 +31,4 @@ kubectl apply -k deployment/
 
 ## TODO
 
-- [ ] Drain Node
+- [] Drain Node
