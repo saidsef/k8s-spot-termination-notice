@@ -18,6 +18,8 @@ spec:
         - key: "kubernetes.io/arch"
           operator: "Equal"
           value: "amd64"
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60
       containers:
       - name: spot-termination-notice
         image: saidsef/k8s-spot-termination-notice:latest
@@ -63,6 +65,9 @@ spec:
               - python
           initialDelaySeconds: 5
           periodSeconds: 5
+          failureThreshold: 2
+          successThreshold: 1
+          timeoutSeconds: 3
         lifecycle:
           postStart:
             exec:
