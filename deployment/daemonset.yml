@@ -53,11 +53,11 @@ spec:
               key: SLACK_CHANNEL
         resources:
           requests:
-            cpu: 10m
-            memory: 10Mi
+            cpu: 30m
+            memory: 50Mi
           limits:
-            cpu: 20m
-            memory: 20Mi
+            cpu: 50m
+            memory: 100Mi
         livenessProbe:
           exec:
             command:
