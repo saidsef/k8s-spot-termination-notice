@@ -17,7 +17,7 @@ script:
    else
      export TAG=$TRAVIS_BRANCH
    fi
-  - docker build -t saidsef/k8s-spot-termination-notice:$TAG
+  - docker build -t saidsef/k8s-spot-termination-notice:$TAG .
   - docker push saidsef/k8s-spot-termination-notice:$TAG
 after_script:
   - docker images
