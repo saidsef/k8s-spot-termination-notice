@@ -1,4 +1,4 @@
-# Kubernetes (K8S) Spot Instance Notification
+# Kubernetes Spot Instance Notification
 
 This service will run as DaemonSet within your K8s cluster running on AWS Spot Instance, it watches the AWS metadata service when running on Spot Instances.
 
@@ -14,7 +14,7 @@ This service will notify you via Slack that an Spot instance will be taken out o
 
 ## Environmental Variables
 
-- CHANNEL (otherwise it will be to `Default`)
+- CHANNEL (otherwise it will be to `default`)
 - SLACK_API_TOKEN
 - SLACK_CHANNEL
 
@@ -22,12 +22,23 @@ This service will notify you via Slack that an Spot instance will be taken out o
 
 To deoloy this in your cluster:
 
-> Update `kustomization.yml` to deploy in a different `namespace`,
+> Update `kustomization.yml` to deploy in a different `namespace`
+
 > otherwise this will be deployed to `default` namespace
 
 ```shell
 kubectl apply -k deployment/
 ```
+
+## Source
+
+Our latest and greatest source of Jenkins can be found on [GitHub](#deployment). Fork us!
+
+## Contributing
+
+We would :heart:  you to contribute by making a [pull request](https://github.com/saidsef/k8s-spot-termination-notice/pulls).
+
+Please read the official [Contribution Guide](./CONTRIBUTING.md) for more information on how you can contribute.
 
 ## TODO
 
