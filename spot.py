@@ -3,20 +3,23 @@
 import os
 import logging
 from time import time, sleep
-from requests import get, post
+from requests import get
 from slackclient import SlackClient
 
 logging.getLogger(__name__)
 logging.basicConfig(level=logging.ERROR)
 
+
 class Spot(object):
+
     def __init__(self):
+
         self.SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN', None)
-        self.SLACK_CHANNEL   = os.environ.get('SLACK_CHANNEL', None)
-        self.EC2_META_DATA   = 'http://169.254.169.254/latest/dynamic/instance-identity/document/'
-        self.SPOT_META_URL   = 'http://169.254.169.254/latest/meta-data/spot/termination-time'
-        self.SLEEP           = 5
-        self.CLUSTER         = os.environ.get('CLUSTER', None)
+        self.SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL', None)
+        self.EC2_META_DATA = 'http://169.254.169.254/latest/dynamic/instance-identity/document/'
+        self.SPOT_META_URL = 'http://169.254.169.254/latest/meta-data/spot/termination-time'
+        self.SLEEP = 5
+        self.CLUSTER = os.environ.get('CLUSTER', None)
 
     def instance_details(self):
         return get(self.EC2_META_DATA, timeout=3).json()
@@ -47,7 +50,7 @@ class Spot(object):
         slack.api_call(
             "chat.postMessage",
             channel=self.SLACK_CHANNEL,
-            attachments = self.payload('terminated!')
+            attachments=self.payload('terminated!')
         )
 
     def watcher(self):
@@ -56,6 +59,7 @@ class Spot(object):
             sleep(self.SLEEP)
 
         self.slackit()
+
 
 if __name__ == '__main__':
     spot = Spot()
