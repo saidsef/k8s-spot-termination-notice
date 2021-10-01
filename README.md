@@ -1,4 +1,4 @@
-# Kubernetes Spot Instance Notification
+# Kubernetes Spot Instance Notification [![CI](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/docker.yml/badge.svg)](#prerequisites) [![Tagging](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/tagging.yml/badge.svg)](#prerequisites) [![Release](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/release.yml/badge.svg)](#prerequisites)
 
 This service will run as DaemonSet within your K8s cluster running on AWS Spot Instance, it watches the AWS metadata service when running on Spot Instances.
 
@@ -11,6 +11,8 @@ This service will notify you via Slack that an Spot instance will be taken out o
 - Kubernetes Cluster (running in AWS)
 - Slack API Token
 - Slack Channel
+
+> Remeber to update Slack `SLACK_API_TOKEN` and `SLACK_CHANNEL` in `secret.yml`
 
 ## Environmental Variables
 
@@ -42,4 +44,4 @@ Please read the official [Contribution Guide](./CONTRIBUTING.md) for more inform
 
 ## TODO
 
-- [] Drain Node
+[] Drain Node
