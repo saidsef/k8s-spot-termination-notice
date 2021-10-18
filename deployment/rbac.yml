@@ -9,23 +9,34 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: spot-termination-notice
   labels:
     app: spot-termination-notice
+  name: spot-termination-notice
 rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "watch", "list"]
-- apiGroups: [""]
-  resources: ["deployments", "replicaset"]
-  verbs: ["get", "watch", "list"]
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - watch
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - deployments
+  - replicaset
+  verbs:
+  - get
+  - watch
+  - list
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: spot-termination-notice
   labels:
     app: spot-termination-notice
+  name: spot-termination-notice
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
