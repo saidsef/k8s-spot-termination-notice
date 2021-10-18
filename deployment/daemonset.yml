@@ -13,8 +13,7 @@ spec:
       labels:
         app: spot-termination-notice
     spec:
-      # future proof: create service account for node draining
-      # serviceAccountName: spot-termination-notice
+      serviceAccountName: spot-termination-notice
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
