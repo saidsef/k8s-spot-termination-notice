@@ -31,6 +31,7 @@ jobs:
       fail-fast: true
       matrix:
         python-version: [3.8, 3.9]
+    name: Python ${{ matrix.python-version }} version
     steps:
     - name: Check out repository code
       uses: actions/checkout@v2
@@ -38,11 +39,15 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: pip install
+    - name: Test application
       run: |
         pip install -r requirements.txt
-        pip install flake8
+        pip install flake8 coverage pytest
         flake8 . --count --show-source --statistics --ignore=E111,E501 --exit-zero --output-file=flake8tmp.txt
+        coverage run -m pytest . && coverage report &&  coverage xml -o coverage.xml
+    - name: Codecov Test Upload
+      uses: codecov/codecov-action@v2
+      continue-on-error: true
 
   build:
     runs-on: ubuntu-latest
