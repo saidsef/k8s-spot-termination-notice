@@ -48,7 +48,7 @@ jobs:
         coverage run -m pytest . && coverage report &&  coverage xml -o coverage.xml
     - name: Codecov Test Upload
       continue-on-error: true
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
 
   build:
     runs-on: ubuntu-latest
