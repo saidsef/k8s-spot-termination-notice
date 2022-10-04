@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: [3.8, 3.9]
+        python-version: ["3.8", "3.9", "3.10", "3.11-dev"]
     name: Python ${{ matrix.python-version }} version
     steps:
     - name: Check out repository code
@@ -132,15 +132,20 @@ jobs:
           fi
           kubectl create namespace $NS
           kubectl apply -n $NS -k deployment/
-          kubectl get all -n $NS
+          kubectl get all,crd,sa,roles,clusterroles,clusterrolebindings -A
 
   auto-approve:
     runs-on: ubuntu-latest
     needs: [build, k8s-test]
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-    - name: Check out repository code
-      uses: actions/checkout@v3
-    - uses: hmarr/auto-approve-action@v2
+    - name: Auto Approve PR
+      uses: actions/github-script@v6
       with:
-        github-token: "${{ secrets.GITHUB_TOKEN }}"
+       script: |
+        github.rest.pulls.createReview({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          pull_number: context.issue.number,
+          event: "APPROVE"
+        })
