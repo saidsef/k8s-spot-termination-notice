@@ -10,6 +10,9 @@ on:
       - "files/**"
       - "test/**"
       - ".github/workflows/docker.yml"
+      - "Pipfile"
+      - "Pipfile.lock"
+      - "requirements.txt"
   pull_request:
     branches:
       - main
@@ -19,6 +22,9 @@ on:
       - "files/**"
       - "test/**"
       - ".github/workflows/docker.yml"
+      - "Pipfile"
+      - "Pipfile.lock"
+      - "requirements.txt"
 
 env:
   REGISTRY: docker.io
