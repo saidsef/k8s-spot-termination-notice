@@ -1,4 +1,4 @@
 # stuff to ignore
-Dockerfile
 .git/
+Dockerfile
 deployment/
