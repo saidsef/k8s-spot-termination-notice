@@ -35,7 +35,7 @@ jobs:
             let release_id = 0;
 
             try {
-              const release = await github.repos.createRelease({
+              const release = await github.rest.repos.createRelease({
                 owner, repo,
                 tag_name: tag,
                 title: tag,
@@ -47,7 +47,7 @@ jobs:
             } catch (e) {
               let latest;
               if (e.status == 422) { // Release alredy exists
-                latest = await github.repos.getLatestRelease({
+                latest = await github.rest.repos.getLatestRelease({
                   owner, repo
                 });
               }
@@ -66,12 +66,12 @@ jobs:
             const fs = require('fs').promises;
 
             try {
-              let asset_ids = await github.repos.listReleaseAssets({
+              let asset_ids = await github.rest.repos.listReleaseAssets({
                 owner, repo,
                 release_id: ${{ steps.release.outputs.result }}
               })
               for (let asset of asset_ids.data) {
-                await github.repos.deleteReleaseAsset({
+                await github.rest.repos.deleteReleaseAsset({
                   owner, repo,
                   asset_id: asset.id
                 });
@@ -80,7 +80,7 @@ jobs:
               console.log(e.status);
             } finally {
               for (let file of await fs.readdir('./deployment')) {
-                await github.repos.uploadReleaseAsset({
+                await github.rest.repos.uploadReleaseAsset({
                   owner, repo,
                   release_id: ${{ steps.release.outputs.result }},
                   name: file,
