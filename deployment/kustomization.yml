@@ -10,4 +10,8 @@ resources:
 images:
 - name: spot-termination-notice
   newName: docker.io/saidsef/k8s-spot-termination-notice
-  newTag: latest
+  newTag: v2022.12
+
+commonAnnotations:
+  app.kubernetes.io/name: spot-termination-notice
+  app.kubernetes.io/part-of: spot-termination-notice
