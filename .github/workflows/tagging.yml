@@ -5,7 +5,7 @@ on:
       - CI
     types:
       - completed
-    branch:
+    branches:
       - main
     paths:
       - "deployment/*"
