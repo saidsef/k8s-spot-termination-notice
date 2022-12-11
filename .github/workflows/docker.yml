@@ -134,11 +134,11 @@ jobs:
           kubectl cluster-info
           export NS=`cat deployment/kustomization.yml  | grep namespace | awk '{ print $2 }'`
           if [ -z "$NS" ]; then
-            export NS='cicd'
+            export NS='spot'
           fi
           kubectl create namespace $NS
           kubectl apply -n $NS -k deployment/
-          kubectl get all,crd,sa,roles,clusterroles,clusterrolebindings -A
+          kubectl get all,crd,sa,roles,clusterroles,clusterrolebindings -A -l app=spot-termination-notice
 
   auto-approve:
     runs-on: ubuntu-latest

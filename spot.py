@@ -7,7 +7,7 @@ from requests import get
 from slack import WebClient
 
 logging.getLogger(__name__)
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 
 
 class Spot(object):
