@@ -4,10 +4,10 @@ import os
 import logging
 from time import time, sleep
 from requests import get
-from slackclient import SlackClient
+from slack import WebClient
 
 logging.getLogger(__name__)
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 
 
 class Spot(object):
@@ -46,7 +46,7 @@ class Spot(object):
         }]
 
     def slackit(self):
-        slack = SlackClient(self.SLACK_API_TOKEN)
+        slack = WebClient(token=self.SLACK_API_TOKEN)
         slack.api_call(
             "chat.postMessage",
             channel=self.SLACK_CHANNEL,

@@ -1,4 +1,4 @@
-FROM python:3-alpine3.16
+FROM docker.io/python:3-alpine3.17
 
 LABEL maintainer="Said Sef said@saidsef.co.uk (saidsef.co.uk/)"
 
