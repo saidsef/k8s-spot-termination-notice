@@ -14,7 +14,7 @@ WORKDIR /app
 COPY spot.py /app
 COPY requirements.txt /app
 
-RUN apk add --update --no-cache python3-dev ca-certificates && \
+RUN apk add --update --no-cache gcc musl-dev libffi-dev openssl-dev python3-dev ca-certificates && \
     pip --no-cache-dir install -r requirements.txt && \
     chown -R nobody .
 
