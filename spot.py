@@ -4,7 +4,7 @@ import os
 import logging
 from time import time, sleep
 from requests import get
-from slack import WebClient
+from slack_sdk import WebClient
 
 logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
