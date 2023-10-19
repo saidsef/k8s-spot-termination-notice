@@ -1,11 +1,11 @@
-FROM docker.io/python:3-alpine3.18
+FROM docker.io/python:3.11-alpine3.18
 
 LABEL maintainer="Said Sef said@saidsef.co.uk (saidsef.co.uk/)"
 
 ARG BUILD_ID
 
 ENV BUILD_ID ${BUILD_ID:-'beta-0'}
-ENV VERSION "2.1"
+ENV VERSION "3.1"
 ENV SLACK_API_TOKEN ${SLACK_API_TOKEN}
 ENV SLACK_CHANNEL ${SKACK_CHANNEL}
 
