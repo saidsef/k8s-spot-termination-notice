@@ -1,4 +1,4 @@
-# Kubernetes Spot Instance Notification [![CI](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/docker.yml/badge.svg)](#prerequisites) [![Tagging](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/tagging.yml/badge.svg)](#prerequisites) [![Release](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/release.yml/badge.svg)](#prerequisites)
+# Kubernetes Spot Instance Notification [![CI](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/docker.yml/badge.svg)](#prerequisites) [![Tagging](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/tagging.yml/badge.svg)](#prerequisites) [![Release](https://github.com/saidsef/k8s-spot-termination-notice/actions/workflows/release.yml/badge.svg)](#prerequisites) [![Maintainability](https://api.codeclimate.com/v1/badges/6e8a177eb52d300d1111/maintainability)](https://codeclimate.com/github/saidsef/k8s-spot-termination-notice/maintainability)
 
 This service will run as DaemonSet within your K8s cluster running on AWS Spot Instance, it watches the AWS metadata service when running on Spot Instances.
 
