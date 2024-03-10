@@ -89,7 +89,7 @@ class Spot(object):
     Monitors for EC2 Spot Instance termination notices and sends notifications.
     """
     while get(self.SPOT_META_URL).status_code != 200:
-      logging.info('still alive, looping ...')
+      logging.info(f"Instance {self.instance_details().get('instanceId')} still alive, looping ...")
       sleep(self.SLEEP)
 
     self.slackit()
