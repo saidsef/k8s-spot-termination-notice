@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 requests = ">=2.31.0"
-slack-sdk = ">=3.27.0"
+slack-sdk = ">=3.27.1"
 
 [dev-packages]
 
