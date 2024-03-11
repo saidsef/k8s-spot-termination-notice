@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3fe4d51e01d2932a4ff08db99d89b22152b28f258d4fac4c0b69d1086b784601"
+            "sha256": "d4691e6cad294ff36d3cdaede5031f1cd95f8b61e292377f2f5dac1e67206a01"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -138,11 +138,11 @@
         },
         "slack-sdk": {
             "hashes": [
-                "sha256:811472ce598db855ab3c02f098fa430323ccb253cfe17ba20c7b05ab206d984d",
-                "sha256:a901c68cb5547d5459cdefd81343d116db56d65f6b33f4081ddf1cdd243bf07e"
+                "sha256:85d86b34d807c26c8bb33c1569ec0985876f06ae4a2692afba765b7a5490d28c",
+                "sha256:c108e509160cf1324c5c8b1f47ca52fb5e287021b8caf9f4ec78ad737ab7b1d9"
             ],
             "index": "pypi",
-            "version": "==3.27.0"
+            "version": "==3.27.1"
         },
         "urllib3": {
             "hashes": [
