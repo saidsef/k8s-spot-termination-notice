@@ -82,9 +82,9 @@ spec:
           allowPrivilegeEscalation: false
           privileged: false
           readOnlyRootFilesystem: true
-          runAsGroup: 65534
+          runAsGroup: 10001
           runAsNonRoot: true
-          runAsUser: 65534
+          runAsUser: 10001
           capabilities:
             drop:
               - ALL

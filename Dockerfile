@@ -16,9 +16,9 @@ COPY requirements.txt /app
 
 RUN apk add --update --no-cache ca-certificates && \
     pip --no-cache-dir install -r requirements.txt && \
-    chown -R nobody .
+    chown -R 10001:10001 .
 
-USER nobody
+USER 10001
 
 CMD ["spot.py"]
 ENTRYPOINT ["python"]
