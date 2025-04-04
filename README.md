@@ -12,7 +12,7 @@ This service will notify you via Slack that an Spot instance will be taken out o
 - Slack API Token
 - Slack Channel
 
-> Remeber to update Slack `SLACK_API_TOKEN` and `SLACK_CHANNEL` in `secret.yml`
+> Add Slack `SLACK_API_TOKEN` and `SLACK_CHANNEL` in `secret.yml`
 
 ## Environmental Variables
 
@@ -44,4 +44,5 @@ Please read the official [Contribution Guide](./CONTRIBUTING.md) for more inform
 
 ## TODO
 
-[] Drain Node
+> [!NOTICE] Drain Node.
+> This is in-progress.

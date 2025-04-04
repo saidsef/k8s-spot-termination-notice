@@ -1,13 +1,16 @@
 FROM docker.io/python:3.12-alpine3.18
 
-LABEL maintainer="Said Sef said@saidsef.co.uk (saidsef.co.uk/)"
+LABEL org.opencontainers.image.authors="Said Sef <said@saidsef.co.uk> (saidsef.co.uk/)"
+LABEL org.opencontainers.image.source="https://github.com/saidsef/k8s-spot-termination-notice"
+LABEL org.opencontainers.image.description="Kubernetes Spot Instance Notification"
+LABEL org.opencontainers.image.licenses="MIT"
 
-ARG BUILD_ID
+ARG BUILD_ID=""
 
-ENV BUILD_ID ${BUILD_ID:-'beta-0'}
-ENV VERSION "3.1"
-ENV SLACK_API_TOKEN ${SLACK_API_TOKEN}
-ENV SLACK_CHANNEL ${SKACK_CHANNEL}
+ENV BUILD_ID=${BUILD_ID:-'beta-0'}
+ENV VERSION="3.1"
+ENV SLACK_API_TOKEN=${SLACK_API_TOKEN}
+ENV SLACK_CHANNEL=${SKACK_CHANNEL}
 
 WORKDIR /app
 
