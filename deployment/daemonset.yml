@@ -7,11 +7,11 @@ spec:
   revisionHistoryLimit: 1
   selector:
     matchLabels:
-      app: spot-termination-notice
+      app.kubernetes.io/name: spot-termination-notice
   template:
     metadata:
       labels:
-        app: spot-termination-notice
+        app.kubernetes.io/name: spot-termination-notice
     spec:
       serviceAccountName: spot-termination-notice
       enableServiceLinks: false
@@ -32,7 +32,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: spot-termination-notice
-        image: docker.io/saidsef/k8s-spot-termination-notice:v2022.12
+        image: docker.io/saidsef/k8s-spot-termination-notice:latest
         imagePullPolicy: Always
         env:
         - name: POD_NAME
