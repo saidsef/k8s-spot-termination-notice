@@ -3,7 +3,7 @@
 import os
 import logging
 from time import time, sleep
-from requests import get
+from requests import get, exceptions
 from slack_sdk import WebClient
 
 # Configure logging
@@ -41,7 +41,17 @@ class Spot(object):
     Returns:
     dict: A dictionary containing the EC2 instance details.
     """
-    return get(self.EC2_META_DATA, timeout=3).json()
+    try:
+      return get(self.EC2_META_DATA, timeout=3).json()
+    except exceptions.RequestException as e:
+      logging.error(f"Request error: {e}")
+      return {"status": "error", "message": f"Request error: {e}"}
+    except exceptions.ConnectionError as e:
+      logging.error(f"Connection error: {e}")
+      return {"status": "error", "message": f"Connection error: {e}"}
+    except Exception as e:
+      logging.error(f"Error fetching instance details: {e}")
+      return {"status": "error", "message": f"Could not fetch instance details: {e}"}
 
   def payload(self, m):
     """
