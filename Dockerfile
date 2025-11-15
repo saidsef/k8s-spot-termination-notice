@@ -1,4 +1,4 @@
-FROM docker.io/python:3.12-alpine3.18
+FROM docker.io/python:3.14-alpine3.22
 
 LABEL org.opencontainers.image.authors="Said Sef <said@saidsef.co.uk> (saidsef.co.uk/)"
 LABEL org.opencontainers.image.source="https://github.com/saidsef/k8s-spot-termination-notice"

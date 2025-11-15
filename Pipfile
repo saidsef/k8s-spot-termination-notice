@@ -10,4 +10,4 @@ slack-sdk = ">=3.35.0"
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.14"
