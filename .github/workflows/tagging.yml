@@ -20,7 +20,7 @@ jobs:
     if: ${{ contains(github.ref, 'main') }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Fetch remote tags
         run: git fetch --all
       - name: Set Tag Value
