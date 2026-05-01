@@ -1,69 +1,115 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from spot import Spot # Assuming the provided code is saved in spot.py
+from spot import Spot
 
 
 class TestSpotInstanceNotifier(unittest.TestCase):
-  """
-  Unit tests for the Spot class to ensure functionality for monitoring AWS EC2 Spot Instance interruptions and notifying via Slack.
-  """
-
   def setUp(self):
-    """
-    Set up environment variables and patch external dependencies.
-    """
-    # Patching the os.environ.get to return predefined values for the test environment
-    patcher = patch('os.environ.get', side_effect=lambda k, v=None: {'SLACK_API_TOKEN': 'test_token', 'SLACK_CHANNEL': 'test_channel', 'CLUSTER': 'test_cluster'}.get(k, v))
+    patcher = patch('os.environ.get', side_effect=lambda k, v=None: {
+      'SLACK_API_TOKEN': 'test_token',
+      'SLACK_CHANNEL': 'test_channel',
+      'CLUSTER': 'test_cluster'
+    }.get(k, v))
     self.addCleanup(patcher.stop)
     self.mock_env = patcher.start()
 
-    # Patching the requests.get method to prevent actual HTTP requests during tests
-    self.mock_get = patch('requests.get').start()
+    self.mock_get = patch('spot.get').start()
     self.addCleanup(patch.stopall)
 
-    # Patching the WebClient to prevent actual Slack API calls
     self.mock_slack = patch('slack_sdk.WebClient').start()
     self.addCleanup(patch.stopall)
 
-
   def test_initialization(self):
-    """
-    Test that the Spot instance is initialized with the correct environment variables and constants.
-    """
     spot = Spot()
-    self.assertEqual(spot.SLACK_API_TOKEN, 'test_token')
-    self.assertEqual(spot.SLACK_CHANNEL, 'test_channel')
-    self.assertEqual(spot.CLUSTER, 'test_cluster')
-    self.assertEqual(spot.SLEEP, 5)
+    self.assertEqual(spot.slack_api_token, 'test_token')
+    self.assertEqual(spot.slack_channel, 'test_channel')
+    self.assertEqual(spot.cluster, 'test_cluster')
+    self.assertEqual(spot.sleep, 5)
 
-
-  def test_instance_details(self):
-    """
-    Test fetching of EC2 instance details.
-    """
-    expected_details = {'instanceId': 'i-1234567890abcdef0', 'accountId': '123456789012', 'availabilityZone': 'us-west-2b', 'instanceType': 'm4.large'}
-    self.mock_get.return_value.json.return_value = expected_details
+  def test_instance_details_success(self):
+    expected = {
+      'instanceId': 'i-1234567890abcdef0',
+      'accountId': '123456789012',
+      'availabilityZone': 'us-west-2b',
+      'instanceType': 'm4.large'
+    }
+    self.mock_get.return_value.json.return_value = expected
 
     spot = Spot()
-    details = expected_details
+    result = spot.instance_details()
 
-    # self.mock_get.assert_called_once_with(spot.EC2_META_DATA, timeout=3)
-    self.assertEqual(details, expected_details)
+    self.mock_get.assert_called_once_with(spot.ec2_meta_data, timeout=3)
+    self.assertEqual(result, expected)
 
+  def test_instance_details_request_error(self):
+    from requests.exceptions import ConnectionError
+    self.mock_get.side_effect = ConnectionError("connection refused")
+
+    spot = Spot()
+    result = spot.instance_details()
+
+    self.assertEqual(result["status"], "error")
+    self.assertIn("connection refused", result["message"])
 
   def test_payload_construction(self):
-    """
-    Test the construction of the payload to be sent to Slack.
-    """
     spot = Spot()
-    spot.instance_details = MagicMock(return_value={'instanceId': 'i-1234567890abcdef0', 'accountId': '123456789012', 'availabilityZone': 'us-west-2b', 'instanceType': 'm4.large'})
+    spot.instance_details = MagicMock(return_value={
+      'instanceId': 'i-1234567890abcdef0',
+      'accountId': '123456789012',
+      'availabilityZone': 'us-west-2b',
+      'instanceType': 'm4.large'
+    })
     payload = spot.payload('terminated!')
 
     self.assertIsInstance(payload, list)
     self.assertIn('Spot Instance Termination Notice', payload[0]['title'])
     self.assertIn('Cluster: test_cluster', payload[0]['text'])
 
-    # Additional tests can be added here to cover more scenarios and edge cases.
+  def test_payload_default_cluster(self):
+    patcher = patch('os.environ.get', side_effect=lambda k, v=None: {
+      'SLACK_API_TOKEN': 'test_token',
+      'SLACK_CHANNEL': 'test_channel'
+    }.get(k, v))
+    patcher.start()
+    self.addCleanup(patcher.stop)
+
+    spot = Spot()
+    spot.instance_details = MagicMock(return_value={
+      'instanceId': 'i-1234567890abcdef0',
+      'accountId': '123456789012',
+      'availabilityZone': 'us-west-2b',
+      'instanceType': 'm4.large'
+    })
+    payload = spot.payload('terminated!')
+
+    self.assertIn('Cluster: Default', payload[0]['text'])
+
+  def test_watcher_sends_slack_on_termination(self):
+    spot = Spot()
+    spot.slackit = MagicMock()
+    spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
+
+    responses = [MagicMock(status_code=404), MagicMock(status_code=200)]
+    self.mock_get.side_effect = responses
+
+    spot.watcher()
+
+    self.assertEqual(self.mock_get.call_count, 2)
+    spot.slackit.assert_called_once()
+
+  def test_watcher_ignores_non_200_statuses(self):
+    spot = Spot()
+    spot.slackit = MagicMock()
+    spot.sleep = 0.01
+    spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
+
+    responses = [MagicMock(status_code=404), MagicMock(status_code=500), MagicMock(status_code=200)]
+    self.mock_get.side_effect = responses
+
+    spot.watcher()
+
+    self.assertEqual(self.mock_get.call_count, 3)
+    spot.slackit.assert_called_once()
 
 
 if __name__ == '__main__':

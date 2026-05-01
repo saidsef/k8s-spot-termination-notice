@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 
 import os
 import logging
@@ -6,65 +6,32 @@ from time import time, sleep
 from requests import get, exceptions
 from slack_sdk import WebClient
 
-# Configure logging
-logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
 class Spot(object):
-  """
-  A class to monitor AWS EC2 Spot Instance interruptions and notify via Slack.
-
-  Attributes:
-  SLACK_API_TOKEN (str): Slack API token for authentication.
-  SLACK_CHANNEL (str): Slack channel ID where notifications will be sent.
-  EC2_META_DATA (str): URL to fetch EC2 instance metadata.
-  SPOT_META_URL (str): URL to check for EC2 Spot Instance termination notices.
-  SLEEP (int): Time in seconds to wait between checks for termination notices.
-  CLUSTER (str): Name of the cluster the instance belongs to.
-  """
-
   def __init__(self):
-    """
-    Initializes the Spot instance with environment variables and constants.
-    """
-    self.SLACK_API_TOKEN = os.environ.get('SLACK_API_TOKEN', None)
-    self.SLACK_CHANNEL = os.environ.get('SLACK_CHANNEL', None)
-    self.EC2_META_DATA = 'http://169.254.169.254/latest/dynamic/instance-identity/document/'
-    self.SPOT_META_URL = 'http://169.254.169.254/latest/meta-data/spot/termination-time'
-    self.SLEEP = 5
-    self.CLUSTER = os.environ.get('CLUSTER', None)
+    self.slack_api_token = os.environ.get('SLACK_API_TOKEN')
+    self.slack_channel = os.environ.get('SLACK_CHANNEL')
+    self.cluster = os.environ.get('CLUSTER')
+    self.ec2_meta_data = 'http://169.254.169.254/latest/dynamic/instance-identity/document/'
+    self.spot_meta_url = 'http://169.254.169.254/latest/meta-data/spot/termination-time'
+    self.sleep = 5
 
   def instance_details(self):
-    """
-    Fetches and returns the EC2 instance details.
-
-    Returns:
-    dict: A dictionary containing the EC2 instance details.
-    """
     try:
-      return get(self.EC2_META_DATA, timeout=3).json()
+      return get(self.ec2_meta_data, timeout=3).json()
     except exceptions.RequestException as e:
-      logging.error(f"Request error: {e}")
+      logger.error(f"Request error: {e}")
       return {"status": "error", "message": f"Request error: {e}"}
-    except exceptions.ConnectionError as e:
-      logging.error(f"Connection error: {e}")
-      return {"status": "error", "message": f"Connection error: {e}"}
     except Exception as e:
-      logging.error(f"Error fetching instance details: {e}")
+      logger.error(f"Error fetching instance details: {e}")
       return {"status": "error", "message": f"Could not fetch instance details: {e}"}
 
   def payload(self, m):
-    """
-    Constructs the payload to be sent to Slack.
-
-    Args:
-    m (str): The message to be included in the payload.
-
-    Returns:
-    list: A list containing the payload dictionary.
-    """
     details = self.instance_details()
-    CLUSTER = 'Default' if self.CLUSTER is None else self.CLUSTER
+    cluster_name = self.cluster or 'Default'
     return [{
       "fallback": m,
       "color": "#a30b24",
@@ -73,7 +40,7 @@ class Spot(object):
       "author_icon": "http://ohai.mr-bot.co/assets/mrbot-500-5a2319d6ea6fa0362f73f3334805e012.png",
       "title": "Spot Instance Termination Notice",
       "title_link": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-interruptions.html",
-      "text": "Cluster: {}, instanceId: {}, accountId: {}, AZ: {}, instanceType: {}".format(CLUSTER, details['instanceId'], details['accountId'], details['availabilityZone'], details['instanceType']),
+      "text": "Cluster: {}, instanceId: {}, accountId: {}, AZ: {}, instanceType: {}".format(cluster_name, details['instanceId'], details['accountId'], details['availabilityZone'], details['instanceType']),
       "fields": [{
         "title": "Priority",
         "value": "High",
@@ -84,23 +51,17 @@ class Spot(object):
     }]
 
   def slackit(self):
-    """
-    Sends a notification to Slack using the constructed payload.
-    """
-    slack = WebClient(token=self.SLACK_API_TOKEN)
+    slack = WebClient(token=self.slack_api_token)
     slack.api_call(
       "chat.postMessage",
-      channel=self.SLACK_CHANNEL,
+      channel=self.slack_channel,
       attachments=self.payload('terminated!')
     )
 
   def watcher(self):
-    """
-    Monitors for EC2 Spot Instance termination notices and sends notifications.
-    """
-    while get(self.SPOT_META_URL).status_code != 200:
-      logging.info(f"Instance {self.instance_details().get('instanceId')} still alive, looping ...")
-      sleep(self.SLEEP)
+    while get(self.spot_meta_url, timeout=3).status_code != 200:
+      logger.info(f"Instance {self.instance_details().get('instanceId')} still alive, looping ...")
+      sleep(self.sleep)
 
     self.slackit()
 
