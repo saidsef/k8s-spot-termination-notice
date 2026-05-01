@@ -17,14 +17,13 @@ spec:
       enableServiceLinks: false
       affinity:
         nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - preference:
-                matchExpressions:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
                   - key: "kubernetes.io/arch"
                     operator: "In"
                     values:
                       - "amd64"
-              weight: 1
       restartPolicy: Always
       terminationGracePeriodSeconds: 60
       securityContext:
@@ -32,34 +31,26 @@ spec:
           type: RuntimeDefault
       containers:
       - name: spot-termination-notice
-        image: docker.io/saidsef/k8s-spot-termination-notice:latest
+        image: k8s-spot-termination-notice
         imagePullPolicy: Always
         env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: SPOT_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: CLUSTER
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
         - name: SLACK_API_TOKEN
           valueFrom:
             secretKeyRef:
-              name: slack
+              name: spot-termination-notice
               key: SLACK_API_TOKEN
         - name: SLACK_CHANNEL
           valueFrom:
             secretKeyRef:
-              name: slack
+              name: spot-termination-notice
               key: SLACK_CHANNEL
         resources:
           requests:
