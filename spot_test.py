@@ -1,4 +1,5 @@
 import unittest
+import requests
 from unittest.mock import patch, MagicMock
 from spot import Spot
 
@@ -42,8 +43,7 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     self.assertEqual(result, expected)
 
   def test_instance_details_request_error(self):
-    from requests.exceptions import ConnectionError
-    self.mock_get.side_effect = ConnectionError("connection refused")
+    self.mock_get.side_effect = requests.exceptions.ConnectionError("connection refused")
 
     spot = Spot()
     result = spot.instance_details()

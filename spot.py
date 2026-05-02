@@ -21,7 +21,7 @@ class Spot(object):
 
   def instance_details(self):
     try:
-      return get(self.ec2_meta_data, timeout=3).json()
+      return get(self.ec2_meta_data, timeout=3).json()  # nosec
     except exceptions.RequestException as e:
       logger.error(f"Request error: {e}")
       return {"status": "error", "message": f"Request error: {e}"}
@@ -40,7 +40,10 @@ class Spot(object):
       "author_icon": "http://ohai.mr-bot.co/assets/mrbot-500-5a2319d6ea6fa0362f73f3334805e012.png",
       "title": "Spot Instance Termination Notice",
       "title_link": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-interruptions.html",
-      "text": "Cluster: {}, instanceId: {}, accountId: {}, AZ: {}, instanceType: {}".format(cluster_name, details['instanceId'], details['accountId'], details['availabilityZone'], details['instanceType']),
+      "text": "Cluster: {}, instanceId: {}, accountId: {}, AZ: {}, instanceType: {}".format(
+        cluster_name, details['instanceId'], details['accountId'],
+        details['availabilityZone'], details['instanceType']
+      ),
       "fields": [{
         "title": "Priority",
         "value": "High",
@@ -59,7 +62,7 @@ class Spot(object):
     )
 
   def watcher(self):
-    while get(self.spot_meta_url, timeout=3).status_code != 200:
+    while get(self.spot_meta_url, timeout=3).status_code != 200:  # nosec
       logger.info(f"Instance {self.instance_details().get('instanceId')} still alive, looping ...")
       sleep(self.sleep)
 
