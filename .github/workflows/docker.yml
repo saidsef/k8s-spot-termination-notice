@@ -128,7 +128,10 @@ jobs:
     if: ${{ ! contains(github.ref, 'main') && github.event_name != 'schedule' }}
     steps:
       - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.13.0
+        uses: helm/kind-action@v1.14.0
+        with:
+          kubectl_version: v1.33.7
+          node_image: kindest/node:v1.33.7
       - name: Checkout
         uses: actions/checkout@v6
       - name: Run K8s test
@@ -138,7 +141,7 @@ jobs:
           if [ -z "$NS" ]; then
             export NS='spot'
           fi
-          kubectl create namespace $NS
+          kubectl get namespace $NS >/dev/null 2>&1 || kubectl create namespace $NS
           kubectl apply -n $NS -k deployment/
           kubectl get all,crd,sa,roles,clusterroles,clusterrolebindings -A -l app=spot-termination-notice
 
