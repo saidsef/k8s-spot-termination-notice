@@ -2,9 +2,7 @@
 
 This service will run as DaemonSet within your K8s cluster running on AWS Spot Instance, it watches the AWS metadata service when running on Spot Instances.
 
-AWS Spot instance receives termination notice via the [instance meta data](https://aws.amazon.com/blogs/aws/new-ec2-spot-instance-termination-notices/), that field will become available when the instance has been marked for termination, and will contain the time when a shutdown signal will be sent to the instance’s operating system.
-
-This service will notify you via Slack that an Spot instance will be taken out of service.
+AWS Spot instance receives an interruption notice via the [instance metadata](https://aws.amazon.com/blogs/aws/new-ec2-spot-instance-termination-notices/). The `instance-action` endpoint becomes available when the instance has been marked for interruption and returns the action (`terminate`, `stop`, or `hibernate`) plus the approximate UTC time. The service polls this endpoint via IMDSv2 and notifies Slack when a `terminate` or `stop` action is detected.
 
 ## Prerequisites
 

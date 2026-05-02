@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a small Python service that runs as a Kubernetes DaemonSet on AWS EC2 Spot Instances. It polls the EC2 instance metadata service (`http://169.254.169.254/latest/meta-data/spot/termination-time`) in a loop; when AWS marks the instance for termination (endpoint returns HTTP 200), it can optionally drain the node via `kubectl drain` and sends a notification to Slack via `slack_sdk.WebClient`.
+This is a small Python service that runs as a Kubernetes DaemonSet on AWS EC2 Spot Instances. It polls the EC2 instance metadata service (`http://169.254.169.254/latest/meta-data/spot/instance-action`) via IMDSv2 in a loop; when AWS marks the instance for interruption (endpoint returns a JSON action of `terminate` or `stop`), it can optionally drain the node via the Kubernetes Python client and sends a notification to Slack via `slack_sdk.WebClient`.
 
 ## Repository Structure
 

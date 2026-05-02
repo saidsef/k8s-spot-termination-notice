@@ -2,6 +2,7 @@
 
 import os
 import logging
+import json
 from time import time, sleep
 from requests import get, exceptions
 from slack_sdk import WebClient
@@ -18,13 +19,28 @@ class Spot(object):
     self.cluster = os.environ.get('CLUSTER')
     self.node_name = os.environ.get('NODE_NAME')
     self.drain_node = str(os.environ.get('DRAIN_NODE', 'false')).lower() == 'true'
-    self.ec2_meta_data = 'http://169.254.169.254/latest/dynamic/instance-identity/document/'
-    self.spot_meta_url = 'http://169.254.169.254/latest/meta-data/spot/termination-time'
+    self.meta_base = 'http://169.254.169.254/latest'
+    self.ec2_meta_data = f'{self.meta_base}/dynamic/instance-identity/document/'
+    self.spot_meta_url = f'{self.meta_base}/meta-data/spot/instance-action'
     self.sleep = 5
+
+  def _meta_get(self, url, timeout=3):
+    try:
+      token_resp = get(
+        f'{self.meta_base}/api/token',
+        headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'},
+        timeout=timeout
+      )
+      if token_resp.status_code == 200:
+        headers = {'X-aws-ec2-metadata-token': token_resp.text}
+        return get(url, headers=headers, timeout=timeout)
+    except exceptions.RequestException:
+      pass
+    return get(url, timeout=timeout)
 
   def instance_details(self):
     try:
-      return get(self.ec2_meta_data, timeout=3).json()  # nosec
+      return self._meta_get(self.ec2_meta_data, timeout=3).json()
     except exceptions.RequestException as e:
       logger.error(f"Request error: {e}")
       return {"status": "error", "message": f"Request error: {e}"}
@@ -32,7 +48,20 @@ class Spot(object):
       logger.error(f"Error fetching instance details: {e}")
       return {"status": "error", "message": f"Could not fetch instance details: {e}"}
 
-  def payload(self, m):
+  def instance_action(self):
+    try:
+      resp = self._meta_get(self.spot_meta_url, timeout=3)
+      if resp.status_code == 200:
+        return resp.json()
+      return {}
+    except exceptions.RequestException as e:
+      logger.warning(f"Spot metadata request failed: {e}")
+      return {}
+    except Exception as e:
+      logger.warning(f"Unexpected error reading spot metadata: {e}")
+      return {}
+
+  def payload(self, m, action='terminate'):
     details = self.instance_details()
     cluster_name = self.cluster or 'Default'
     return [{
@@ -41,11 +70,11 @@ class Spot(object):
       "pretext": "",
       "author_name": "Mr Bot",
       "author_icon": "http://ohai.mr-bot.co/assets/mrbot-500-5a2319d6ea6fa0362f73f3334805e012.png",
-      "title": "Spot Instance Termination Notice",
+      "title": "Spot Instance {} Notice".format(action.capitalize()),
       "title_link": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-interruptions.html",
       "text": "Cluster: {}, instanceId: {}, accountId: {}, AZ: {}, instanceType: {}".format(
-        cluster_name, details['instanceId'], details['accountId'],
-        details['availabilityZone'], details['instanceType']
+        cluster_name, details.get('instanceId', 'unknown'), details.get('accountId', 'unknown'),
+        details.get('availabilityZone', 'unknown'), details.get('instanceType', 'unknown')
       ),
       "fields": [{
         "title": "Priority",
@@ -56,12 +85,12 @@ class Spot(object):
       "ts": time()
     }]
 
-  def slackit(self):
+  def slackit(self, action='terminate'):
     slack = WebClient(token=self.slack_api_token)
     slack.api_call(
       "chat.postMessage",
       channel=self.slack_channel,
-      attachments=self.payload('terminated!')
+      attachments=self.payload('terminated!', action)
     )
 
   def _is_daemonset_pod(self, pod):
@@ -112,12 +141,17 @@ class Spot(object):
       logger.error(f"Error draining node: {e}")
 
   def watcher(self):
-    while get(self.spot_meta_url, timeout=3).status_code != 200:  # nosec
+    while True:
+      action_data = self.instance_action()
+      action = action_data.get('action', '')
+      if action in ('terminate', 'stop'):
+        break
+
       logger.info(f"Instance {self.instance_details().get('instanceId')} still alive, looping ...")
       sleep(self.sleep)
 
     self.drain()
-    self.slackit()
+    self.slackit(action)
 
 
 if __name__ == '__main__':

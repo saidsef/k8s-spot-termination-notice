@@ -31,6 +31,41 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     self.assertEqual(spot.node_name, 'test-node')
     self.assertFalse(spot.drain_node)
     self.assertEqual(spot.sleep, 5)
+    self.assertIn('instance-action', spot.spot_meta_url)
+    self.assertIn('instance-identity', spot.ec2_meta_data)
+
+  def test_meta_get_uses_imdsv2_token(self):
+    spot = Spot()
+    token_resp = MagicMock()
+    token_resp.status_code = 200
+    token_resp.text = 'imds-token'
+
+    data_resp = MagicMock()
+    data_resp.status_code = 200
+    data_resp.json.return_value = {'action': 'terminate'}
+
+    self.mock_get.side_effect = [token_resp, data_resp]
+
+    result = spot._meta_get(spot.spot_meta_url)
+
+    self.assertEqual(self.mock_get.call_count, 2)
+    self.assertEqual(result.status_code, 200)
+
+  def test_meta_get_falls_back_to_imdsv1(self):
+    spot = Spot()
+    token_resp = MagicMock()
+    token_resp.status_code = 403
+
+    data_resp = MagicMock()
+    data_resp.status_code = 200
+    data_resp.json.return_value = {'action': 'terminate'}
+
+    self.mock_get.side_effect = [token_resp, data_resp]
+
+    result = spot._meta_get(spot.spot_meta_url)
+
+    self.assertEqual(self.mock_get.call_count, 2)
+    self.assertEqual(result.status_code, 200)
 
   def test_instance_details_success(self):
     expected = {
@@ -39,12 +74,16 @@ class TestSpotInstanceNotifier(unittest.TestCase):
       'availabilityZone': 'us-west-2b',
       'instanceType': 'm4.large'
     }
-    self.mock_get.return_value.json.return_value = expected
+    token_resp = MagicMock()
+    token_resp.status_code = 200
+    token_resp.text = 'token'
+    data_resp = MagicMock()
+    data_resp.json.return_value = expected
+    self.mock_get.side_effect = [token_resp, data_resp]
 
     spot = Spot()
     result = spot.instance_details()
 
-    self.mock_get.assert_called_once_with(spot.ec2_meta_data, timeout=3)
     self.assertEqual(result, expected)
 
   def test_instance_details_request_error(self):
@@ -56,6 +95,41 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     self.assertEqual(result["status"], "error")
     self.assertIn("connection refused", result["message"])
 
+  def test_instance_action_returns_data(self):
+    token_resp = MagicMock()
+    token_resp.status_code = 200
+    token_resp.text = 'token'
+    action_resp = MagicMock()
+    action_resp.status_code = 200
+    action_resp.json.return_value = {'action': 'terminate', 'time': '2025-09-18T08:22:00Z'}
+    self.mock_get.side_effect = [token_resp, action_resp]
+
+    spot = Spot()
+    result = spot.instance_action()
+
+    self.assertEqual(result['action'], 'terminate')
+
+  def test_instance_action_returns_empty_on_404(self):
+    token_resp = MagicMock()
+    token_resp.status_code = 200
+    token_resp.text = 'token'
+    action_resp = MagicMock()
+    action_resp.status_code = 404
+    self.mock_get.side_effect = [token_resp, action_resp]
+
+    spot = Spot()
+    result = spot.instance_action()
+
+    self.assertEqual(result, {})
+
+  def test_instance_action_returns_empty_on_exception(self):
+    self.mock_get.side_effect = requests.exceptions.ConnectionError("refused")
+
+    spot = Spot()
+    result = spot.instance_action()
+
+    self.assertEqual(result, {})
+
   def test_payload_construction(self):
     spot = Spot()
     spot.instance_details = MagicMock(return_value={
@@ -64,10 +138,10 @@ class TestSpotInstanceNotifier(unittest.TestCase):
       'availabilityZone': 'us-west-2b',
       'instanceType': 'm4.large'
     })
-    payload = spot.payload('terminated!')
+    payload = spot.payload('terminated!', 'terminate')
 
     self.assertIsInstance(payload, list)
-    self.assertIn('Spot Instance Termination Notice', payload[0]['title'])
+    self.assertIn('Spot Instance Terminate Notice', payload[0]['title'])
     self.assertIn('Cluster: test_cluster', payload[0]['text'])
 
   def test_payload_default_cluster(self):
@@ -85,35 +159,108 @@ class TestSpotInstanceNotifier(unittest.TestCase):
       'availabilityZone': 'us-west-2b',
       'instanceType': 'm4.large'
     })
-    payload = spot.payload('terminated!')
+    payload = spot.payload('terminated!', 'stop')
 
     self.assertIn('Cluster: Default', payload[0]['text'])
+    self.assertIn('Spot Instance Stop Notice', payload[0]['title'])
+
+  def test_payload_safe_on_error_details(self):
+    spot = Spot()
+    spot.instance_details = MagicMock(return_value={
+      "status": "error",
+      "message": "Request error"
+    })
+    payload = spot.payload('terminated!', 'terminate')
+
+    self.assertIn('instanceId: unknown', payload[0]['text'])
 
   def test_watcher_sends_slack_on_termination(self):
     spot = Spot()
     spot.slackit = MagicMock()
+    spot.instance_action = MagicMock(return_value={'action': 'terminate'})
     spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
-
-    responses = [MagicMock(status_code=404), MagicMock(status_code=200)]
-    self.mock_get.side_effect = responses
 
     spot.watcher()
 
-    self.assertEqual(self.mock_get.call_count, 2)
-    spot.slackit.assert_called_once()
+    spot.slackit.assert_called_once_with('terminate')
 
-  def test_watcher_ignores_non_200_statuses(self):
+  def test_watcher_sends_slack_on_stop(self):
     spot = Spot()
     spot.slackit = MagicMock()
+    spot.instance_action = MagicMock(return_value={'action': 'stop'})
+    spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
+
+    spot.watcher()
+
+    spot.slackit.assert_called_once_with('stop')
+
+  def test_watcher_ignores_no_action(self):
+    spot = Spot()
+    spot.slackit = MagicMock()
+    spot.drain = MagicMock()
     spot.sleep = 0.01
     spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
 
-    responses = [MagicMock(status_code=404), MagicMock(status_code=500), MagicMock(status_code=200)]
-    self.mock_get.side_effect = responses
+    responses = [{}, {}, {'action': 'terminate'}]
+    spot.instance_action = MagicMock(side_effect=responses)
 
     spot.watcher()
 
-    self.assertEqual(self.mock_get.call_count, 3)
+    self.assertEqual(spot.instance_action.call_count, 3)
+    spot.drain.assert_called_once()
+    spot.slackit.assert_called_once()
+
+  def test_watcher_ignores_hibernate(self):
+    spot = Spot()
+    spot.slackit = MagicMock()
+    spot.drain = MagicMock()
+    spot.sleep = 0.01
+    spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
+
+    responses = [{'action': 'hibernate'}, {'action': 'hibernate'}, {'action': 'terminate'}]
+    spot.instance_action = MagicMock(side_effect=responses)
+
+    spot.watcher()
+
+    self.assertEqual(spot.instance_action.call_count, 3)
+    spot.drain.assert_called_once()
+    spot.slackit.assert_called_once()
+
+  def test_watcher_loops_until_termination(self):
+    spot = Spot()
+    spot.slackit = MagicMock()
+    spot.drain = MagicMock()
+    spot.sleep = 0.01
+    spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
+
+    responses = [{}, {}, {'action': 'terminate'}]
+    spot.instance_action = MagicMock(side_effect=responses)
+
+    spot.watcher()
+
+    self.assertEqual(spot.instance_action.call_count, 3)
+    spot.drain.assert_called_once()
+    spot.slackit.assert_called_once()
+
+  def test_watcher_survives_meta_get_exception(self):
+    spot = Spot()
+    spot.slackit = MagicMock()
+    spot.drain = MagicMock()
+    spot.sleep = 0.01
+    spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
+
+    action_resp = MagicMock()
+    action_resp.status_code = 200
+    action_resp.json.return_value = {'action': 'terminate'}
+
+    with patch.object(spot, '_meta_get', side_effect=[
+      requests.exceptions.ConnectionError("timeout"),
+      requests.exceptions.ConnectionError("timeout"),
+      action_resp
+    ]):
+      spot.watcher()
+
+    spot.drain.assert_called_once()
     spot.slackit.assert_called_once()
 
   def test_initialization_drain_node_default(self):
@@ -257,14 +404,11 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     spot = Spot()
     spot.slackit = MagicMock()
     spot.drain = MagicMock()
+    spot.instance_action = MagicMock(return_value={'action': 'terminate'})
     spot.instance_details = MagicMock(return_value={'instanceId': 'i-123'})
-
-    responses = [MagicMock(status_code=404), MagicMock(status_code=200)]
-    self.mock_get.side_effect = responses
 
     spot.watcher()
 
-    self.assertEqual(self.mock_get.call_count, 2)
     spot.drain.assert_called_once()
     spot.slackit.assert_called_once()
 
