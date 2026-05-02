@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "Dockerfile"
+      - "deployment/**"
       - "groovy/**"
       - "files/**"
       - "test/**"
@@ -19,6 +20,7 @@ on:
       - main
     paths:
       - "Dockerfile"
+      - "deployment/**"
       - "groovy/**"
       - "files/**"
       - "test/**"
@@ -38,7 +40,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.13", "3.14"]
     name: Python ${{ matrix.python-version }} version
     steps:
     - name: Check out repository code
@@ -139,11 +141,12 @@ jobs:
           kubectl cluster-info
           export NS=`cat deployment/kustomization.yml | grep '^namespace:' | awk '{ print $2 }'`
           if [ -z "$NS" ]; then
-            export NS='spot'
+            export NS='default'
           fi
           kubectl get namespace $NS >/dev/null 2>&1 || kubectl create namespace $NS
-          kubectl apply -n $NS -k deployment/
-          kubectl get all,crd,sa,roles,clusterroles,clusterrolebindings -A -l app=spot-termination-notice
+          (cd deployment && kustomize edit set namespace $NS)
+          kubectl apply -k deployment/
+          kubectl get all,crd,sa,roles,clusterroles,clusterrolebindings -A -l app.kubernetes.io/name=spot-termination-notice
 
   auto-approve:
     runs-on: ubuntu-latest
