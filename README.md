@@ -19,6 +19,8 @@ This service will notify you via Slack that an Spot instance will be taken out o
 - CHANNEL (otherwise it will be to `default`)
 - SLACK_API_TOKEN
 - SLACK_CHANNEL
+- NODE_NAME (node to drain, usually set via `spec.nodeName` downward API)
+- DRAIN_NODE (`true` to enable node draining on spot termination, default `false`)
 
 ## Deployment
 
@@ -44,5 +46,4 @@ Please read the official [Contribution Guide](./CONTRIBUTING.md) for more inform
 
 ## TODO
 
-> [!NOTICE] Drain Node.
-> This is in-progress.
+> Drain Node feature is now available behind the `DRAIN_NODE` environment variable.

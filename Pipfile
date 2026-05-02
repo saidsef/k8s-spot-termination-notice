@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 requests = ">=2.32.0"
 slack-sdk = ">=3.39.0"
+kubernetes = ">=32.0.0"
 
 [dev-packages]
 
