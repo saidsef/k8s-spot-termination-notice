@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "Dockerfile"
+      - "deployment/**"
       - "groovy/**"
       - "files/**"
       - "test/**"
@@ -19,6 +20,7 @@ on:
       - main
     paths:
       - "Dockerfile"
+      - "deployment/**"
       - "groovy/**"
       - "files/**"
       - "test/**"
@@ -144,7 +146,7 @@ jobs:
           kubectl get namespace $NS >/dev/null 2>&1 || kubectl create namespace $NS
           (cd deployment && kustomize edit set namespace $NS)
           kubectl apply -k deployment/
-          kubectl get all,crd,sa,roles,clusterroles,clusterrolebindings -A -l app=spot-termination-notice
+          kubectl get all,crd,sa,roles,clusterroles,clusterrolebindings -A -l app.kubernetes.io/name=spot-termination-notice
 
   auto-approve:
     runs-on: ubuntu-latest
