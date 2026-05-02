@@ -2,12 +2,33 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
+namespace: default
+
+labels:
+  - pairs:
+      app.kubernetes.io/name: spot-termination-notice
+      app.kubernetes.io/part-of: spot-termination-notice
+    includeSelectors: true
+    includeTemplates: true
+
 resources:
 - rbac.yml
 - daemonset.yml
 - secret.yml
 
 images:
-- name: spot-termination-notice
+- name: k8s-spot-termination-notice
   newName: docker.io/saidsef/k8s-spot-termination-notice
-  newTag: v2025.04
+  newTag: latest
+
+replacements:
+- source:
+    kind: ServiceAccount
+    name: spot-termination-notice
+    fieldPath: metadata.namespace
+  targets:
+  - select:
+      kind: ClusterRoleBinding
+      name: spot-termination-notice
+    fieldPaths:
+    - subjects.[name=spot-termination-notice].namespace
