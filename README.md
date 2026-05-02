@@ -12,7 +12,7 @@ This service will notify you via Slack that an Spot instance will be taken out o
 - Slack API Token
 - Slack Channel
 
-> Add Slack `SLACK_API_TOKEN` and `SLACK_CHANNEL` in `secret.yml`
+> Add Slack `SLACK_API_TOKEN` and `SLACK_CHANNEL` in `secret.yml`, under the Secret named `spot-termination-notice`
 
 ## Environmental Variables
 
@@ -22,11 +22,11 @@ This service will notify you via Slack that an Spot instance will be taken out o
 
 ## Deployment
 
-To deoloy this in your cluster:
+To deploy this in your cluster:
 
-> Update `kustomization.yml` to deploy in a different `namespace`
+> Update `kustomization.yml` namespace field to deploy in a different `namespace`
 
-> otherwise this will be deployed to `default` namespace
+> The default namespace is `default`
 
 ```shell
 kubectl apply -k deployment/
