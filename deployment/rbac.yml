@@ -51,3 +51,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: spot-termination-notice
+  namespace: default
