@@ -22,19 +22,26 @@ AWS Spot instance receives an interruption notice via the [instance metadata](ht
 
 ## Deployment
 
-To deploy this in your cluster:
-
-> Update `kustomization.yml` namespace field to deploy in a different `namespace`
-
-> The default namespace is `default`
+To deploy this in your cluster, first set the target namespace in Kustomize, then apply:
 
 ```shell
+cd deployment
+kustomize edit set namespace <namespace>
+kubectl apply -k .
+```
+
+Or from the repository root (modifies `deployment/kustomization.yml` in place):
+
+```shell
+(cd deployment && kustomize edit set namespace <namespace>)
 kubectl apply -k deployment/
 ```
 
+If no namespace is set, Kustomize builds namespace-agnostic manifests and `kubectl` applies them to the current context namespace. However, the ClusterRoleBinding subject requires a namespace — always run `kustomize edit set namespace` before applying to ensure the ServiceAccount namespace is injected correctly.
+
 ## Source
 
-Our latest and greatest source of Jenkins can be found on [GitHub](#deployment). Fork us!
+Our latest and greatest source can be found on [GitHub](#deployment). Fork us!
 
 ## Contributing
 
