@@ -2,9 +2,7 @@
 
 This service will run as DaemonSet within your K8s cluster running on AWS Spot Instance, it watches the AWS metadata service when running on Spot Instances.
 
-AWS Spot instance receives termination notice via the [instance meta data](https://aws.amazon.com/blogs/aws/new-ec2-spot-instance-termination-notices/), that field will become available when the instance has been marked for termination, and will contain the time when a shutdown signal will be sent to the instance’s operating system.
-
-This service will notify you via Slack that an Spot instance will be taken out of service.
+AWS Spot instance receives an interruption notice via the [instance metadata](https://aws.amazon.com/blogs/aws/new-ec2-spot-instance-termination-notices/). The `instance-action` endpoint becomes available when the instance has been marked for interruption and returns the action (`terminate`, `stop`, or `hibernate`) plus the approximate UTC time. The service polls this endpoint via IMDSv2 and notifies Slack when a `terminate` or `stop` action is detected.
 
 ## Prerequisites
 
@@ -19,22 +17,31 @@ This service will notify you via Slack that an Spot instance will be taken out o
 - CHANNEL (otherwise it will be to `default`)
 - SLACK_API_TOKEN
 - SLACK_CHANNEL
+- NODE_NAME (node to drain, usually set via `spec.nodeName` downward API)
+- DRAIN_NODE (`true` to enable node draining on spot termination, default `false`)
 
 ## Deployment
 
-To deploy this in your cluster:
-
-> Update `kustomization.yml` namespace field to deploy in a different `namespace`
-
-> The default namespace is `default`
+To deploy this in your cluster, first set the target namespace in Kustomize, then apply:
 
 ```shell
+cd deployment
+kustomize edit set namespace <namespace>
+kubectl apply -k .
+```
+
+Or from the repository root (modifies `deployment/kustomization.yml` in place):
+
+```shell
+(cd deployment && kustomize edit set namespace <namespace>)
 kubectl apply -k deployment/
 ```
 
+If no namespace is set, Kustomize builds namespace-agnostic manifests and `kubectl` applies them to the current context namespace. However, the ClusterRoleBinding subject requires a namespace — always run `kustomize edit set namespace` before applying to ensure the ServiceAccount namespace is injected correctly.
+
 ## Source
 
-Our latest and greatest source of Jenkins can be found on [GitHub](#deployment). Fork us!
+Our latest and greatest source can be found on [GitHub](#deployment). Fork us!
 
 ## Contributing
 
@@ -44,5 +51,4 @@ Please read the official [Contribution Guide](./CONTRIBUTING.md) for more inform
 
 ## TODO
 
-> [!NOTICE] Drain Node.
-> This is in-progress.
+> Drain Node feature is now available behind the `DRAIN_NODE` environment variable.

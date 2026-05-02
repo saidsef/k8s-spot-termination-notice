@@ -1,3 +1,4 @@
 -i https://pypi.org/simple
 requests>=2.32.0
 slack-sdk>=3.39.0
+kubernetes>=32.0.0

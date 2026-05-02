@@ -20,15 +20,3 @@ images:
 - name: k8s-spot-termination-notice
   newName: docker.io/saidsef/k8s-spot-termination-notice
   newTag: latest
-
-replacements:
-- source:
-    kind: ServiceAccount
-    name: spot-termination-notice
-    fieldPath: metadata.namespace
-  targets:
-  - select:
-      kind: ClusterRoleBinding
-      name: spot-termination-notice
-    fieldPaths:
-    - subjects.[name=spot-termination-notice].namespace

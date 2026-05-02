@@ -52,6 +52,8 @@ spec:
             secretKeyRef:
               name: spot-termination-notice
               key: SLACK_CHANNEL
+        - name: DRAIN_NODE
+          value: "false"
         resources:
           requests:
             cpu: 30m
