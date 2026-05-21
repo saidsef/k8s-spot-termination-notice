@@ -4,8 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-requests = ">=2.33.1"
-slack-sdk = ">=3.39.0"
+requests = ">=2.34.2"
+slack-sdk = ">=3.42.0"
 kubernetes = ">=32.0.0"
 
 [dev-packages]
