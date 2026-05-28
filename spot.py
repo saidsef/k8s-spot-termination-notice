@@ -81,7 +81,7 @@ class Spot(object):
         "value": "High",
         "short": "false"
       }],
-      "footer": "SpotInstaceWatcher",
+      "footer": "SpotInstanceWatcher",
       "ts": time()
     }]
 

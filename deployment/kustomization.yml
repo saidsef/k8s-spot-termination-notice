@@ -13,8 +13,3 @@ resources:
 - rbac.yml
 - daemonset.yml
 - secret.yml
-
-images:
-- name: k8s-spot-termination-notice
-  newName: docker.io/saidsef/k8s-spot-termination-notice
-  newTag: latest

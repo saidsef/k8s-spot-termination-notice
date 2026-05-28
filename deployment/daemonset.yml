@@ -31,7 +31,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: spot-termination-notice
-        image: k8s-spot-termination-notice
+        image: docker.io/saidsef/k8s-spot-termination-notice:latest
         imagePullPolicy: Always
         env:
         - name: NODE_NAME
