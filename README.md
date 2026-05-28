@@ -14,7 +14,7 @@ AWS Spot instance receives an interruption notice via the [instance metadata](ht
 
 ## Environmental Variables
 
-- CHANNEL (otherwise it will be to `default`)
+- CLUSTER (cluster identifier shown in Slack notifications, defaults to `Default`)
 - SLACK_API_TOKEN
 - SLACK_CHANNEL
 - NODE_NAME (node to drain, usually set via `spec.nodeName` downward API)
@@ -49,6 +49,3 @@ We would :heart:  you to contribute by making a [pull request](https://github.co
 
 Please read the official [Contribution Guide](./CONTRIBUTING.md) for more information on how you can contribute.
 
-## TODO
-
-> Drain Node feature is now available behind the `DRAIN_NODE` environment variable.
