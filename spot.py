@@ -9,7 +9,7 @@ from slack_sdk import WebClient
 from kubernetes import client, config
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
 
 
 class Spot(object):
@@ -35,7 +35,7 @@ class Spot(object):
         headers = {'X-aws-ec2-metadata-token': token_resp.text}
         return get(url, headers=headers, timeout=timeout)
     except exceptions.RequestException:
-      pass
+      logger.debug("IMDSv2 token request failed, falling back to IMDSv1")
     return get(url, timeout=timeout)
 
   def instance_details(self):
@@ -86,12 +86,17 @@ class Spot(object):
     }]
 
   def slackit(self, action='terminate'):
-    slack = WebClient(token=self.slack_api_token)
-    slack.api_call(
-      "chat.postMessage",
-      channel=self.slack_channel,
-      attachments=self.payload('terminated!', action)
-    )
+    logger.info(f"Sending Slack notification: action={action}, channel={self.slack_channel}")
+    try:
+      slack = WebClient(token=self.slack_api_token)
+      slack.api_call(
+        "chat.postMessage",
+        channel=self.slack_channel,
+        attachments=self.payload('terminated!', action)
+      )
+      logger.info("Slack notification sent")
+    except Exception as e:
+      logger.error(f"Failed to send Slack notification: {e}")
 
   def _is_daemonset_pod(self, pod):
     for ref in (pod.metadata.owner_references or []):
@@ -141,13 +146,15 @@ class Spot(object):
       logger.error(f"Error draining node: {e}")
 
   def watcher(self):
+    logger.info(f"Spot termination watcher started (node={self.node_name}, cluster={self.cluster or 'Default'}, drain={self.drain_node})")
     while True:
       action_data = self.instance_action()
       action = action_data.get('action', '')
       if action in ('terminate', 'stop'):
+        logger.warning(f"Spot interruption detected: action={action}")
         break
 
-      logger.info(f"Instance {self.instance_details().get('instanceId')} still alive, looping ...")
+      logger.info(f"No interruption detected, next check in {self.sleep}s")
       sleep(self.sleep)
 
     self.drain()
