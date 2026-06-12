@@ -11,9 +11,8 @@ on:
       - "files/**"
       - "test/**"
       - ".github/workflows/docker.yml"
-      - "Pipfile"
-      - "Pipfile.lock"
-      - "requirements.txt"
+      - "pyproject.toml"
+      - "uv.lock"
       - "*.py"
   pull_request:
     branches:
@@ -25,9 +24,8 @@ on:
       - "files/**"
       - "test/**"
       - ".github/workflows/docker.yml"
-      - "Pipfile"
-      - "Pipfile.lock"
-      - "requirements.txt"
+      - "pyproject.toml"
+      - "uv.lock"
       - "*.py"
 
 env:
@@ -45,17 +43,18 @@ jobs:
     steps:
     - name: Check out repository code
       uses: actions/checkout@v6
-    - name: Python ${{ matrix.python-version }} setup
-      uses: actions/setup-python@v6
+    - name: Set up UV and Python ${{ matrix.python-version }}
+      uses: astral-sh/setup-uv@v6
       with:
         python-version: ${{ matrix.python-version }}
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
     - name: Test application
       continue-on-error: true
       run: |
-        pip install -r requirements.txt
-        pip install flake8 coverage pytest
-        flake8 . --count --show-source --statistics --ignore=E111,E501 --exit-zero --output-file=flake8tmp.txt
-        coverage run -m pytest . && coverage report &&  coverage xml -o coverage.xml
+        uv sync --frozen --group dev
+        uv run flake8 . --count --show-source --statistics --ignore=E111,E501 --exit-zero --output-file=flake8tmp.txt
+        uv run coverage run -m pytest . && uv run coverage report && uv run coverage xml -o coverage.xml
     - name: Codecov Test Upload
       continue-on-error: true
       uses: codecov/codecov-action@v7
