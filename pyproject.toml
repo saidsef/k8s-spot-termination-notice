@@ -6,7 +6,7 @@ requires-python = ">=3.13"
 dependencies = [
   "requests>=2.32.0",
   "slack-sdk>=3.43.0",
-  "kubernetes>=36.0.2",
+  "kubernetes>=36.0.3",
 ]
 
 [dependency-groups]
