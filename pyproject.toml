@@ -12,7 +12,7 @@ dependencies = [
 [dependency-groups]
 dev = [
   "flake8>=7.0.0",
-  "coverage>=7.15.1",
+  "coverage>=7.15.2",
   "pytest>=9.1.1",
 ]
 
