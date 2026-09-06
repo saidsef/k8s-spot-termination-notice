@@ -89,7 +89,6 @@ class Spot(object):
     logger.info(f"Sending Slack notification: action={action}, channel={self.slack_channel}")
     try:
       slack = WebClient(token=self.slack_api_token)
-      # api_call() is keyword-only and takes the message body via json=. See #135.
       slack.api_call(
         "chat.postMessage",
         json={

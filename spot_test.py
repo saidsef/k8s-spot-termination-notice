@@ -175,13 +175,13 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     spot = Spot()
     spot.instance_details = MagicMock(return_value={'instanceId': 'i-1234567890abcdef0'})
 
-    # autospec so arguments api_call() does not accept raise instead of being swallowed
     with patch('spot.WebClient', autospec=True) as mock_client:
       with self.assertLogs('spot', level='INFO') as logs:
         spot.slackit('terminate')
 
     self.assertIn('Slack notification sent', '\n'.join(logs.output))
-    mock_client.assert_called_once_with(token='test_token')
+    mock_client.assert_called_once()
+    self.assertEqual(mock_client.call_args.kwargs['token'], 'test_token')
 
     api_call = mock_client.return_value.api_call
     api_call.assert_called_once()
