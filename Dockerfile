@@ -10,9 +10,6 @@ LABEL org.opencontainers.image.licenses="MIT"
 ARG BUILD_ID=""
 
 ENV BUILD_ID=${BUILD_ID:-'beta-0'}
-ENV VERSION="3.1"
-ENV SLACK_API_TOKEN=${SLACK_API_TOKEN}
-ENV SLACK_CHANNEL=${SLACK_CHANNEL}
 ENV UV_PROJECT_ENVIRONMENT="/app/.venv"
 ENV VIRTUAL_ENV="/app/.venv"
 ENV PATH="/app/.venv/bin:$PATH"
