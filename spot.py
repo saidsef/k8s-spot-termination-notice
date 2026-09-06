@@ -91,12 +91,14 @@ class Spot(object):
       slack = WebClient(token=self.slack_api_token)
       slack.api_call(
         "chat.postMessage",
-        channel=self.slack_channel,
-        attachments=self.payload('terminated!', action)
+        json={
+          "channel": self.slack_channel,
+          "attachments": self.payload('terminated!', action)
+        }
       )
       logger.info("Slack notification sent")
     except Exception as e:
-      logger.error(f"Failed to send Slack notification: {e}")
+      logger.exception(f"Failed to send Slack notification: {type(e).__name__}: {e}")
 
   def _is_daemonset_pod(self, pod):
     for ref in (pod.metadata.owner_references or []):
