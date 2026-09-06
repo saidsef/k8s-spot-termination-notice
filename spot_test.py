@@ -20,9 +20,6 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     self.mock_get = patch('spot.get').start()
     self.addCleanup(patch.stopall)
 
-    self.mock_slack = patch('slack_sdk.WebClient').start()
-    self.addCleanup(patch.stopall)
-
   def test_initialization(self):
     spot = Spot()
     self.assertEqual(spot.slack_api_token, 'test_token')
@@ -173,6 +170,38 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     payload = spot.payload('terminated!', 'terminate')
 
     self.assertIn('instanceId: unknown', payload[0]['text'])
+
+  def test_slackit_posts_message(self):
+    spot = Spot()
+    spot.instance_details = MagicMock(return_value={'instanceId': 'i-1234567890abcdef0'})
+
+    with patch('spot.WebClient', autospec=True) as mock_client:
+      with self.assertLogs('spot', level='INFO') as logs:
+        spot.slackit('terminate')
+
+    self.assertIn('Slack notification sent', '\n'.join(logs.output))
+    mock_client.assert_called_once()
+    self.assertEqual(mock_client.call_args.kwargs['token'], 'test_token')
+
+    api_call = mock_client.return_value.api_call
+    api_call.assert_called_once()
+    args, kwargs = api_call.call_args
+    self.assertEqual(args, ('chat.postMessage',))
+    self.assertEqual(kwargs['json']['channel'], 'test_channel')
+    self.assertIn('Spot Instance Terminate Notice', kwargs['json']['attachments'][0]['title'])
+
+  def test_slackit_logs_failure_without_raising(self):
+    spot = Spot()
+    spot.instance_details = MagicMock(return_value={'instanceId': 'i-1234567890abcdef0'})
+
+    with patch('spot.WebClient', autospec=True) as mock_client:
+      mock_client.return_value.api_call.side_effect = RuntimeError("slack is down")
+      with self.assertLogs('spot', level='ERROR') as logs:
+        spot.slackit('stop')
+
+    output = '\n'.join(logs.output)
+    self.assertIn('RuntimeError', output)
+    self.assertIn('slack is down', output)
 
   def test_watcher_sends_slack_on_termination(self):
     spot = Spot()
