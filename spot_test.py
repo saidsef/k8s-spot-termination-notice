@@ -360,6 +360,12 @@ class TestSpotInstanceNotifier(unittest.TestCase):
       mock_config.assert_called_once()
       mock_v1.patch_node.assert_called_once_with('test-node', {'spec': {'unschedulable': True}})
       mock_v1.create_namespaced_pod_eviction.assert_called_once()
+      name, namespace, eviction = mock_v1.create_namespaced_pod_eviction.call_args.args
+      self.assertEqual((name, namespace), ('test-pod', 'default'))
+      self.assertIsInstance(eviction, client.V1Eviction)
+      self.assertEqual(eviction.metadata.name, 'test-pod')
+      self.assertEqual(eviction.metadata.namespace, 'default')
+      self.assertEqual(eviction.delete_options.grace_period_seconds, 30)
 
   def test_drain_skips_daemonset_pods(self):
     spot = Spot()
