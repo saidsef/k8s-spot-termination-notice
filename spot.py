@@ -4,7 +4,7 @@ import os
 import logging
 import json
 from time import time, sleep
-from requests import get, exceptions
+from requests import get, put, exceptions
 from slack_sdk import WebClient
 from kubernetes import client, config
 
@@ -26,7 +26,7 @@ class Spot(object):
 
   def _meta_get(self, url, timeout=3):
     try:
-      token_resp = get(
+      token_resp = put(
         f'{self.meta_base}/api/token',
         headers={'X-aws-ec2-metadata-token-ttl-seconds': '21600'},
         timeout=timeout
