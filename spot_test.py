@@ -19,6 +19,9 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     self.mock_env = patcher.start()
 
     self.mock_get = patch('spot.get').start()
+    self.mock_put = patch('spot.put').start()
+    self.mock_put.return_value.status_code = 200
+    self.mock_put.return_value.text = 'imds-token'
     self.addCleanup(patch.stopall)
 
   def test_initialization(self):
@@ -34,36 +37,66 @@ class TestSpotInstanceNotifier(unittest.TestCase):
 
   def test_meta_get_uses_imdsv2_token(self):
     spot = Spot()
-    token_resp = MagicMock()
-    token_resp.status_code = 200
-    token_resp.text = 'imds-token'
-
     data_resp = MagicMock()
     data_resp.status_code = 200
     data_resp.json.return_value = {'action': 'terminate'}
-
-    self.mock_get.side_effect = [token_resp, data_resp]
+    self.mock_get.return_value = data_resp
 
     result = spot._meta_get(spot.spot_meta_url)
 
-    self.assertEqual(self.mock_get.call_count, 2)
+    self.mock_put.assert_called_once()
+    self.assertEqual(self.mock_put.call_args.args, (f'{spot.meta_base}/api/token',))
+    self.assertEqual(self.mock_put.call_args.kwargs['headers'], {'X-aws-ec2-metadata-token-ttl-seconds': '21600'})
+    self.mock_get.assert_called_once()
+    self.assertEqual(self.mock_get.call_args.kwargs['headers'], {'X-aws-ec2-metadata-token': 'imds-token'})
     self.assertEqual(result.status_code, 200)
 
   def test_meta_get_falls_back_to_imdsv1(self):
     spot = Spot()
-    token_resp = MagicMock()
-    token_resp.status_code = 403
+    self.mock_put.return_value.status_code = 403
 
     data_resp = MagicMock()
     data_resp.status_code = 200
     data_resp.json.return_value = {'action': 'terminate'}
-
-    self.mock_get.side_effect = [token_resp, data_resp]
+    self.mock_get.return_value = data_resp
 
     result = spot._meta_get(spot.spot_meta_url)
 
-    self.assertEqual(self.mock_get.call_count, 2)
+    self.mock_get.assert_called_once()
+    self.assertNotIn('headers', self.mock_get.call_args.kwargs)
     self.assertEqual(result.status_code, 200)
+
+  def test_meta_get_falls_back_when_token_request_fails(self):
+    spot = Spot()
+    self.mock_put.side_effect = requests.exceptions.ConnectTimeout("hop limit")
+
+    data_resp = MagicMock()
+    data_resp.status_code = 200
+    self.mock_get.return_value = data_resp
+
+    result = spot._meta_get(spot.spot_meta_url)
+
+    self.mock_get.assert_called_once()
+    self.assertNotIn('headers', self.mock_get.call_args.kwargs)
+    self.assertEqual(result.status_code, 200)
+
+  def test_instance_action_with_imdsv2_required(self):
+    action_resp = MagicMock()
+    action_resp.status_code = 200
+    action_resp.json.return_value = {'action': 'terminate', 'time': '2026-10-17T15:53:08Z'}
+    unauthorised_resp = MagicMock()
+    unauthorised_resp.status_code = 401
+
+    def imds(url, headers=None, timeout=None):
+      if headers and headers.get('X-aws-ec2-metadata-token') == 'imds-token':
+        return action_resp
+      return unauthorised_resp
+    self.mock_get.side_effect = imds
+
+    spot = Spot()
+    result = spot.instance_action()
+
+    self.assertEqual(result['action'], 'terminate')
 
   def test_instance_details_success(self):
     expected = {
@@ -72,12 +105,9 @@ class TestSpotInstanceNotifier(unittest.TestCase):
       'availabilityZone': 'us-west-2b',
       'instanceType': 'm4.large'
     }
-    token_resp = MagicMock()
-    token_resp.status_code = 200
-    token_resp.text = 'token'
     data_resp = MagicMock()
     data_resp.json.return_value = expected
-    self.mock_get.side_effect = [token_resp, data_resp]
+    self.mock_get.return_value = data_resp
 
     spot = Spot()
     result = spot.instance_details()
@@ -94,13 +124,10 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     self.assertIn("connection refused", result["message"])
 
   def test_instance_action_returns_data(self):
-    token_resp = MagicMock()
-    token_resp.status_code = 200
-    token_resp.text = 'token'
     action_resp = MagicMock()
     action_resp.status_code = 200
     action_resp.json.return_value = {'action': 'terminate', 'time': '2025-09-18T08:22:00Z'}
-    self.mock_get.side_effect = [token_resp, action_resp]
+    self.mock_get.return_value = action_resp
 
     spot = Spot()
     result = spot.instance_action()
@@ -108,12 +135,9 @@ class TestSpotInstanceNotifier(unittest.TestCase):
     self.assertEqual(result['action'], 'terminate')
 
   def test_instance_action_returns_empty_on_404(self):
-    token_resp = MagicMock()
-    token_resp.status_code = 200
-    token_resp.text = 'token'
     action_resp = MagicMock()
     action_resp.status_code = 404
-    self.mock_get.side_effect = [token_resp, action_resp]
+    self.mock_get.return_value = action_resp
 
     spot = Spot()
     result = spot.instance_action()
