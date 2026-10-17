@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import signal
 import logging
 import json
 from time import time, sleep
@@ -23,6 +24,8 @@ class Spot(object):
     self.ec2_meta_data = f'{self.meta_base}/dynamic/instance-identity/document/'
     self.spot_meta_url = f'{self.meta_base}/meta-data/spot/instance-action'
     self.sleep = 5
+    self.drain_deadline = 90
+    self.api_timeout = 10
 
   def _meta_get(self, url, timeout=3):
     try:
@@ -88,7 +91,7 @@ class Spot(object):
   def slackit(self, action='terminate'):
     logger.info(f"Sending Slack notification: action={action}, channel={self.slack_channel}")
     try:
-      slack = WebClient(token=self.slack_api_token)
+      slack = WebClient(token=self.slack_api_token, timeout=10)
       slack.api_call(
         "chat.postMessage",
         json={
@@ -111,6 +114,26 @@ class Spot(object):
       return True
     return False
 
+  def _evict(self, v1, pod):
+    name = pod.metadata.name
+    namespace = pod.metadata.namespace
+    eviction = client.V1Eviction(
+      metadata=client.V1ObjectMeta(name=name, namespace=namespace),
+      delete_options=client.V1DeleteOptions(grace_period_seconds=30)
+    )
+    try:
+      v1.create_namespaced_pod_eviction(name, namespace, eviction, _request_timeout=self.api_timeout)
+      logger.info(f"Evicted pod {namespace}/{name}")
+      return 'evicted'
+    except client.exceptions.ApiException as e:
+      if e.status == 404:
+        logger.info(f"Pod {namespace}/{name} is already gone")
+        return 'evicted'
+      if e.status == 429:
+        return 'blocked'
+      logger.error(f"Failed to evict pod {namespace}/{name}: {e.status} {e.reason}")
+      return 'failed'
+
   def drain(self):
     if not self.drain_node:
       return
@@ -118,32 +141,45 @@ class Spot(object):
       logger.warning("NODE_NAME not set, skipping drain")
       return
     try:
+      deadline = time() + self.drain_deadline
       config.load_incluster_config()
       v1 = client.CoreV1Api()
 
       logger.info(f"Cordoning node {self.node_name} ...")
       body = {"spec": {"unschedulable": True}}
-      v1.patch_node(self.node_name, body)
+      v1.patch_node(self.node_name, body, _request_timeout=self.api_timeout)
 
       logger.info(f"Evicting pods from node {self.node_name} ...")
       field_selector = f"spec.nodeName={self.node_name}"
-      pods = v1.list_pod_for_all_namespaces(field_selector=field_selector)
+      pods = v1.list_pod_for_all_namespaces(field_selector=field_selector, _request_timeout=self.api_timeout)
 
+      pending = []
       for pod in pods.items:
         if self._is_daemonset_pod(pod) or self._is_mirror_pod(pod):
           logger.info(f"Skipping pod {pod.metadata.namespace}/{pod.metadata.name}")
           continue
-        try:
-          eviction = client.V1Eviction(
-            metadata=client.V1ObjectMeta(name=pod.metadata.name, namespace=pod.metadata.namespace),
-            delete_options=client.V1DeleteOptions(grace_period_seconds=30)
-          )
-          v1.create_namespaced_pod_eviction(pod.metadata.name, pod.metadata.namespace, eviction)
-          logger.info(f"Evicted pod {pod.metadata.namespace}/{pod.metadata.name}")
-        except client.exceptions.ApiException as e:
-          logger.error(f"Failed to evict pod {pod.metadata.namespace}/{pod.metadata.name}: {e.status} {e.reason}")
+        pending.append(pod)
 
-      logger.info(f"Node {self.node_name} drained successfully")
+      failed = []
+      while pending:
+        blocked = []
+        for pod in pending:
+          result = self._evict(v1, pod)
+          if result == 'blocked':
+            blocked.append(pod)
+          elif result == 'failed':
+            failed.append(pod)
+        pending = blocked
+        if not pending or time() + self.sleep > deadline:
+          break
+        logger.info(f"Disruption budgets block {len(pending)} eviction(s), retrying in {self.sleep}s")
+        sleep(self.sleep)
+
+      remaining = [f"{pod.metadata.namespace}/{pod.metadata.name}" for pod in failed + pending]
+      if remaining:
+        logger.warning(f"Node {self.node_name} drained with {len(remaining)} pod(s) left: {', '.join(remaining)}")
+      else:
+        logger.info(f"Node {self.node_name} drained successfully")
     except Exception as e:
       logger.error(f"Error draining node: {e}")
 
@@ -156,13 +192,28 @@ class Spot(object):
         logger.warning(f"Spot interruption detected: action={action}")
         break
 
-      logger.info(f"No interruption detected, next check in {self.sleep}s")
+      logger.debug(f"No interruption detected, next check in {self.sleep}s")
       sleep(self.sleep)
 
-    self.drain()
     self.slackit(action)
+    self.drain()
+
+  def idle(self):
+    logger.info("Interruption handled, waiting for the node to shut down")
+    while True:
+      sleep(60)
+
+
+def exit_on_sigterm(_signum, _frame):
+  raise SystemExit(0)
+
+
+def main():
+  signal.signal(signal.SIGTERM, exit_on_sigterm)
+  spot = Spot()
+  spot.watcher()
+  spot.idle()
 
 
 if __name__ == '__main__':
-  spot = Spot()
-  spot.watcher()
+  main()
