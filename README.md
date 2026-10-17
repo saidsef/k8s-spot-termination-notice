@@ -7,10 +7,13 @@ AWS Spot instance receives an interruption notice via the [instance metadata](ht
 ## Prerequisites
 
 - Kubernetes Cluster (running in AWS)
+- Instance metadata PUT response hop limit of 2 or more on each node
 - Slack API Token
 - Slack Channel
 
 > Add Slack `SLACK_API_TOKEN` and `SLACK_CHANNEL` in `secret.yml`, under the Secret named `spot-termination-notice`
+
+> A pod outside the host network counts as an extra network hop. With a hop limit of 1, the pod may receive no IMDSv2 token response. See [Change the PUT response hop limit](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-existing-instances.html#modify-PUT-response-hop-limit).
 
 ## Environmental Variables
 
