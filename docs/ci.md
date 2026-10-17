@@ -38,14 +38,14 @@ in. The manifests use `latest`, see [image tag](deploying.md#image-tag).
 
 ## Tagging and releases
 
-`.github/workflows/tagging.yml` runs after each CI run on `main` completes, whatever its
-conclusion. It creates the Git tag `vYYYY.MM` for the current month at the latest commit on
-`main`, or moves the tag there if it exists.
+`.github/workflows/tagging.yml` runs after each CI run on `main` completes, and tags only when
+that run passed. It creates the Git tag `vYYYY.MM` for the current month at the commit CI built,
+or moves the tag there if it exists.
 
-`.github/workflows/release.yml` runs after tagging completes on `main`. It creates a GitHub release
+`.github/workflows/release.yml` runs after tagging passes on `main`. It creates a GitHub release
 for the month's tag with generated release notes, and replaces the assets of that release with the
-files in `deployment/`. When the month's release exists, the workflow replaces the assets of the
-latest release instead. Both workflows can also run by hand.
+files in `deployment/` at the tagged commit. When the month's release exists, the workflow replaces
+the assets of the latest release instead. Both workflows can also run by hand.
 
 ## Documentation
 
