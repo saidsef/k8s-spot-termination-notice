@@ -119,7 +119,7 @@ The service calls the Kubernetes API only to drain its node.
 | `pods` | `list` | find the pods on the node |
 | `pods/eviction` | `create` | evict those pods |
 
-The ClusterRole in `rbac.yml` grants these verbs and others that the service does not call.
+The ClusterRole in `rbac.yml` grants these verbs and nothing more.
 
 ## Pod
 
