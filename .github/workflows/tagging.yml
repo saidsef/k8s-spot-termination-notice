@@ -7,8 +7,6 @@ on:
       - completed
     branches:
       - main
-    paths:
-      - "deployment/*"
   workflow_dispatch:
 
 env:
@@ -17,7 +15,7 @@ env:
 jobs:
   tagging:
     runs-on: ubuntu-latest
-    if: ${{ contains(github.ref, 'main') }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') }}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v7
@@ -33,6 +31,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           script: |
+            const sha = context.payload.workflow_run?.head_sha ?? context.sha;
             let tagExists = [];
             try {
               await github.rest.git.createRef({
@@ -40,7 +39,7 @@ jobs:
                 repo: context.repo.repo,
                 ref: "refs/tags/${{ env.DATE }}",
                 message: "${{ env.CHANGELOG }}",
-                sha: context.sha
+                sha: sha
               });
             } catch (e) {
               console.log("Tag already exists: " + e)
@@ -53,6 +52,6 @@ jobs:
                 repo: context.repo.repo,
                 ref: "tags/${{ env.DATE }}",
                 message: "${{ env.CHANGELOG }}",
-                sha: context.sha
+                sha: sha
               });
             }
