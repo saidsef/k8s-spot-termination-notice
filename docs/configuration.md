@@ -8,13 +8,12 @@ The service reads its configuration from environment variables when it starts.
 | --- | --- | --- | --- |
 | `SLACK_API_TOKEN` | none | the `SLACK_API_TOKEN` key of the `spot-termination-notice` Secret | the bot token for `chat.postMessage` |
 | `SLACK_CHANNEL` | none | the `SLACK_CHANNEL` key of the same Secret | the channel that receives the message |
-| `CLUSTER` | `Default` | the node name, from `spec.nodeName` | the name in the `Cluster` part of the message and in the start-up log line |
+| `CLUSTER` | `Default` | the placeholder `cluster-name-goes-here` | the name in the `Cluster` part of the message and in the start-up log line |
 | `NODE_NAME` | none | the node name, from `spec.nodeName` | the node to cordon and drain |
 | `DRAIN_NODE` | `false` | `false` | `true`, in any letter case, enables [node draining](draining.md) |
 
-The DaemonSet fills `CLUSTER` from the node name, so each message names the node in its `Cluster`
-part. To show a cluster name, replace the `valueFrom` of `CLUSTER` in `deployment/daemonset.yml`
-with a literal value:
+Replace the placeholder for `CLUSTER` in `deployment/daemonset.yml` with the name that Slack
+messages should show:
 
 ```yaml
 - name: CLUSTER

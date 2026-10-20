@@ -54,5 +54,5 @@ and [initiate a Spot Instance interruption](https://docs.aws.amazon.com/AWSEC2/l
 | `Failed to send Slack notification` with `missing_scope` | the Slack app lacks the `chat:write` scope |
 | `Error draining node:` with `403` | the ClusterRoleBinding does not name the ServiceAccount in the namespace the pod runs in |
 | `Node ... drained with N pod(s) left` | a PodDisruptionBudget still blocked an eviction at the deadline, or an eviction failed with the error logged before it |
-| the `Cluster` part of each message shows the node name | the DaemonSet sets `CLUSTER` from `spec.nodeName`, see [configuration](configuration.md#environment-variables) |
+| the `Cluster` part of each message shows `cluster-name-goes-here` | `deployment/daemonset.yml` still holds the placeholder for `CLUSTER`, see [configuration](configuration.md#environment-variables) |
 | no pod on some nodes | the node has a taint the DaemonSet does not tolerate, or an architecture other than `amd64` and `arm64` |

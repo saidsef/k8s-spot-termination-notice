@@ -27,8 +27,9 @@ and evict its pods before the instance stops.
 
 ## Quick start
 
-Replace the two placeholders in `deployment/secret.yml` with the plain bot token and channel. The
-commands below set a namespace and apply the manifests:
+Replace the two placeholders in `deployment/secret.yml` with the plain bot token and channel, and
+the placeholder for `CLUSTER` in `deployment/daemonset.yml` with the cluster name. The commands
+below set a namespace and apply the manifests:
 
 ```shell
 kubectl create namespace spot-termination-notice

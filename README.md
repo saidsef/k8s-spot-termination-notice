@@ -19,7 +19,7 @@ Full documentation: [k8s-spot-termination-notice.readthedocs.io](https://k8s-spo
 
 ## Environmental Variables
 
-- CLUSTER (name shown as the cluster in Slack notifications, defaults to `Default`, and the DaemonSet sets it to the node name)
+- CLUSTER (name shown as the cluster in Slack notifications, defaults to `Default`, and the DaemonSet holds a placeholder to replace)
 - SLACK_API_TOKEN
 - SLACK_CHANNEL
 - NODE_NAME (node to drain, usually set via `spec.nodeName` downward API)

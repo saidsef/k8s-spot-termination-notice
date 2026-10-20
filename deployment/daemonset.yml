@@ -40,9 +40,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: CLUSTER
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
+          value: "cluster-name-goes-here"
         - name: SLACK_API_TOKEN
           valueFrom:
             secretKeyRef:
